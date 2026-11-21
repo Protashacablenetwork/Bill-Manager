@@ -1147,14 +1147,13 @@
            ============================================================ */
         .search-container {
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            gap: 12px;
             margin: 14px 0 16px;
-            flex-wrap: wrap;
         }
         .search-input-wrap {
-            flex: 1;
+            width: 100%;
             position: relative;
-            min-width: 260px;
         }
         .search-input {
             width: 100%;
@@ -1204,6 +1203,39 @@
             transition: var(--transition);
             white-space: nowrap;
             font-family: inherit;
+        }
+
+        .filter-action-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 2px;
+        }
+
+        .area-filter-select {
+            padding: 6px 12px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 12px;
+            font-weight: 700;
+            outline: none;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 120px;
+            box-shadow: var(--shadow-sm);
+            flex-shrink: 0;
+        }
+        .area-filter-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+        body.dark .area-filter-select {
+            background: var(--bg-card);
+            border-color: var(--border-color);
         }
         
         /* Vibrant Active Filter Tab */
@@ -1421,6 +1453,38 @@
             font-size: 10px;
             font-weight: 700;
             cursor: pointer;
+        }
+
+        /* Duplicate Modal Specific Styles */
+        .duplicate-item {
+            padding: 10px;
+            border-radius: var(--radius-md);
+            background: var(--bg-input);
+            margin-bottom: 8px;
+            border-left: 4px solid #ef4444;
+        }
+        .duplicate-item-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+        .duplicate-item-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .duplicate-tag {
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            text-transform: uppercase;
+        }
+        body.dark .duplicate-tag {
+            background: #331313;
+            color: #fca5a5;
         }
 
         /* ============================================================
@@ -1857,6 +1921,16 @@
                     </svg>
                     <span id="txtExportBtn">এক্সপোর্ট</span>
                 </button>
+ 
+                <!-- Duplicate Check Button (PC Only) -->
+                <button class="header-btn desktop-only-btn" onclick="checkDuplicates()" title="ডুপ্লিকেট এন্ট্রি চেক" style="background:#fee2e2; color:#b91c1c; border-color:#fca5a5;">
+                    <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                        <path d="m9 14 2 2 4-4"></path>
+                    </svg>
+                    <span style="font-weight:700;">ডুপ্লিকেট চেক</span>
+                </button>
 
                 <!-- Refresh Button (Mobile View Only) -->
                 <button class="header-btn header-btn-refresh mobile-only-btn" onclick="handleManualRefresh()" title="রিফ্রেশ করুন" id="btnRefreshMobile">
@@ -2185,10 +2259,18 @@
                     </svg>
                     <input type="text" id="tableSearch" class="search-input" placeholder="গ্রাহকের নাম, মোবাইল, আইডি বা ঠিকানা দিয়ে খুঁজুন..." oninput="onSearchInput()">
                 </div>
-                <div class="filter-tabs">
-                    <button class="filter-tab active" data-tab="all" onclick="setTableFilter('all')" id="tabAll">সকল</button>
-                    <button class="filter-tab" data-tab="paid" onclick="setTableFilter('paid')" id="tabPaid">পরিশোধিত</button>
-                    <button class="filter-tab" data-tab="due" onclick="setTableFilter('due')" id="tabDue">বকেয়া</button>
+                <div class="filter-action-row">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-tab="all" onclick="setTableFilter('all')" id="tabAll">সকল</button>
+                        <button class="filter-tab" data-tab="paid" onclick="setTableFilter('paid')" id="tabPaid">পরিশোধিত</button>
+                        <button class="filter-tab" data-tab="due" onclick="setTableFilter('due')" id="tabDue">বকেয়া</button>
+                    </div>
+
+                    <select id="areaSelect" class="area-filter-select" onchange="onAreaChange()">
+                        <option value="all">সকল এরিয়া</option>
+                        <option value="area1">এরিয়া ১</option>
+                        <option value="area2">এরিয়া ২</option>
+                    </select>
                 </div>
             </div>
 
@@ -2262,6 +2344,20 @@
         </div>
     </div>
 
+    <!-- ===== DUPLICATE CHECK MODAL ===== -->
+    <div id="duplicateModal" class="modal" onclick="if(event.target===this) closeDuplicateModal()">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <span>🔍 ডুপ্লিকেট এন্ট্রি চেক</span>
+                <button onclick="closeDuplicateModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);">✕</button>
+            </div>
+            <div id="duplicateModalBody" style="max-height: 400px; overflow-y: auto; padding-right: 5px;"></div>
+            <div class="modal-btn-row">
+                <button class="modal-btn primary" onclick="closeDuplicateModal()" style="grid-column: span 2;">বন্ধ করুন</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ===== TOAST ===== -->
     <div id="toast" class="toast"></div>
 
@@ -2328,6 +2424,11 @@
             if (netType === "বকেয়া বিল") return DUE_BILL_LINKS[month] || "";
             return "";
         }
+
+        const AREAS = {
+            "area1": ["চর শিমুল চূড়া", "সরকার বাড়ী", "বলিদে পাড়া", "নবীন নগর", "বালুঘাট", "কেরানী বাড়ী", "আমেদ বাড়ী", "কৃষ্ণচূড়া", "আকন্দ পাড়া", "চাংপাড়া", "কান্দা পাড়া", "ব্যাংতলা", "বাকশাবাড়ী", "দহের পাড়", "ইজারা পাড়া", "দষ্টিপাড়া", "ভেলুয়া", "লক্ষ্মিডাংরী", "লক্ষীডাংরী", "চকবন্দী", "কক্সবাজার"],
+            "area2": ["উত্তর পাড়া", "দক্ষিণ পাড়া", "টানা ব্রীজ বাজার", "দত্তপাড়া", "ফুলকার চর", "কড়ইতলা", "মোল্লা বাজার", "পেচার চর", "চন্দনপুর"]
+        };
 
         // Translations Dictionary
         const I18N = {
@@ -2430,6 +2531,7 @@
         let currentLang = localStorage.getItem('bill_lang') || 'bn';
         let currentView = 'dashboard';
         let tableFilter = 'all';
+        let currentArea = 'all';
         let searchQuery = '';
         let selectedRecord = null;
         let trendChart = null;
@@ -3157,14 +3259,24 @@
             if (tableFilter === 'paid') list = list.filter(r => r.due === 0);
             else if (tableFilter === 'due') list = list.filter(r => r.due > 0);
 
-            // Search
+            // Area Filter (Fuzzy)
+            if (currentArea !== 'all') {
+                const villages = AREAS[currentArea].map(v => normalizeBengali(v));
+                list = list.filter(r => {
+                    if (!r.address) return false;
+                    const normalizedAddr = normalizeBengali(r.address);
+                    return villages.some(v => normalizedAddr.includes(v));
+                });
+            }
+
+            // Search (Fuzzy)
             if (searchQuery) {
-                const q = searchQuery.toLowerCase();
+                const q = normalizeBengali(searchQuery);
                 list = list.filter(r => 
-                    (r.name && r.name.toLowerCase().includes(q)) ||
+                    (r.name && normalizeBengali(r.name).includes(q)) ||
                     (r.mob && r.mob.includes(q)) ||
                     (!isDisBill && r.id && r.id.toLowerCase().includes(q)) ||
-                    (r.address && r.address.toLowerCase().includes(q))
+                    (r.address && normalizeBengali(r.address).includes(q))
                 );
             }
 
@@ -3246,6 +3358,83 @@
 
         function closeModal() {
             document.getElementById('customerModal').classList.remove('active');
+        }
+
+        // ============================================================
+        // DUPLICATE ENTRY CHECK LOGIC
+        // ============================================================
+        function checkDuplicates() {
+            if (!allRecords || allRecords.length === 0) {
+                showToast("⚠️ চেক করার জন্য কোনো তথ্য নেই", "warning");
+                return;
+            }
+
+            const duplicates = [];
+            const mobileMap = new Map();
+            const nameIdMap = new Map();
+
+            allRecords.forEach((rec, idx) => {
+                // Check Mobile Duplicates
+                if (rec.mob && rec.mob !== "---" && rec.mob.length > 5) {
+                    if (mobileMap.has(rec.mob)) {
+                        duplicates.push({ type: 'MOBILE', record: rec, original: mobileMap.get(rec.mob) });
+                    } else {
+                        mobileMap.set(rec.mob, rec);
+                    }
+                }
+
+                // Check Name + ID Duplicates (excluding empty/null)
+                const nameIdKey = `${normalizeBengali(rec.name)}_${normalizeBengali(rec.id || "")}`;
+                if (rec.name && rec.name !== "নাম নেই") {
+                    if (nameIdMap.has(nameIdKey)) {
+                        duplicates.push({ type: 'NAME_ID', record: rec, original: nameIdMap.get(nameIdKey) });
+                    } else {
+                        nameIdMap.set(nameIdKey, rec);
+                    }
+                }
+            });
+
+            const body = document.getElementById('duplicateModalBody');
+            if (duplicates.length === 0) {
+                body.innerHTML = `
+                    <div style="text-align:center; padding:30px 10px;">
+                        <div style="font-size:40px; margin-bottom:15px;">✅</div>
+                        <div style="font-weight:700; color:var(--text-primary);">অভিনন্দন! কোনো ডুপ্লিকেট এন্ট্রি পাওয়া যায়নি।</div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top:5px;">আপনার সকল ডেটা ইউনিক বা একক।</div>
+                    </div>
+                `;
+            } else {
+                let html = `<div style="margin-bottom:15px; font-size:12px; color:var(--text-muted);">মোট <b>${duplicates.length}</b>টি সম্ভাব্য ডুপ্লিকেট পাওয়া গেছে:</div>`;
+                
+                duplicates.forEach(dup => {
+                    const r = dup.record;
+                    const o = dup.original;
+                    const tagLabel = dup.type === 'MOBILE' ? 'একই মোবাইল' : 'একই নাম/আইডি';
+                    
+                    html += `
+                        <div class="duplicate-item">
+                            <div class="duplicate-item-header">
+                                <span>${escapeHtml(r.name)}</span>
+                                <span class="duplicate-tag">${tagLabel}</span>
+                            </div>
+                            <div class="duplicate-item-sub">
+                                <div>📱 মোবাইল: ${escapeHtml(r.mob)}</div>
+                                <div>📍 ঠিকানা: ${escapeHtml(r.address)}</div>
+                                <div style="margin-top:4px; padding-top:4px; border-top:1px dashed rgba(0,0,0,0.1);">
+                                    <b>ম্যাচিং রেকর্ড:</b> ${escapeHtml(o.name)} (${escapeHtml(o.address)})
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                body.innerHTML = html;
+            }
+
+            document.getElementById('duplicateModal').classList.add('active');
+        }
+
+        function closeDuplicateModal() {
+            document.getElementById('duplicateModal').classList.remove('active');
         }
 
         function copyText(txt) {
@@ -3463,6 +3652,11 @@
             renderTable();
         }
 
+        function onAreaChange() {
+            currentArea = document.getElementById('areaSelect').value;
+            renderTable();
+        }
+
         function selectSpecificMonth(m) {
             currentMonth = m;
             const monthSel = document.getElementById('monthSelect');
@@ -3615,6 +3809,28 @@
         function escapeHtml(str) {
             if (!str) return '';
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // Fuzzy matching normalization for Bengali (Removes vowel signs, Nukta, Hasant, and SPACES)
+        // Also normalizes initial vowels and similar sounding consonants for extreme robustness.
+        function normalizeBengali(str) {
+            if (!str) return "";
+            return String(str)
+                // 1. Remove all spaces and Bengali dependent marks (vowel signs, Nukta, etc.)
+                .replace(/[\s\u0981-\u0983\u09BC\u09BE-\u09CD\u09D7\u09E2\u09E3]/g, "") 
+                // 2. Normalize initial vowels (initial form of vowels)
+                .replace(/[অআ]/g, "অ")
+                .replace(/[ইঈএ]/g, "ই")
+                .replace(/[উঊও]/g, "উ")
+                // 3. Normalize similar sounding consonants
+                .replace(/[শষস]/g, "স")
+                .replace(/[ণন]/g, "ন")
+                .replace(/[ড়ঢ়র]/g, "র")
+                .replace(/[যজ]/g, "জ")
+                .replace(/[তৎ]/g, "ত")
+                .replace(/[বভ]/g, "ব")
+                .toLowerCase()
+                .trim();
         }
 
         // ============================================================
